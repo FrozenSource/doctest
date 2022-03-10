@@ -4520,10 +4520,14 @@ namespace {
         static LONG CALLBACK handleException(PEXCEPTION_POINTERS ExceptionInfo) {
             // Multiple threads may enter this filter/handler at once. We want the error message to be printed on the
             // console just once no matter how many threads have crashed.
+        #ifndef DOCTEST_CONFIG_NO_MULTI_THREADING
             static std::mutex mutex;
+        #endif
             static bool execute = true;
             {
+            #ifndef DOCTEST_CONFIG_NO_MULTI_THREADING
                 std::lock_guard<std::mutex> lock(mutex);
+            #endif
                 if(execute) {
                     bool reported = false;
                     for(size_t i = 0; i < DOCTEST_COUNTOF(signalDefs); ++i) {
@@ -5282,7 +5286,9 @@ namespace {
     struct XmlReporter : public IReporter
     {
         XmlWriter  xml;
+    #ifndef DOCTEST_CONFIG_NO_MULTI_THREADING
         std::mutex mutex;
+    #endif
 
         // caching pointers/references to objects of these types - safe to do
         const ContextOptions& opt;
@@ -5442,7 +5448,9 @@ namespace {
         }
 
         void test_case_exception(const TestCaseException& e) override {
+        #ifndef DOCTEST_CONFIG_NO_MULTI_THREADING
             std::lock_guard<std::mutex> lock(mutex);
+        #endif
 
             xml.scopedElement("Exception")
                     .writeAttribute("crash", e.is_crash)
@@ -5463,7 +5471,9 @@ namespace {
             if(!rb.m_failed && !opt.success)
                 return;
 
+        #ifndef DOCTEST_CONFIG_NO_MULTI_THREADING
             std::lock_guard<std::mutex> lock(mutex);
+        #endif
 
             xml.startElement("Expression")
                     .writeAttribute("success", !rb.m_failed)
@@ -5489,7 +5499,9 @@ namespace {
         }
 
         void log_message(const MessageData& mb) override {
+        #ifndef DOCTEST_CONFIG_NO_MULTI_THREADING
             std::lock_guard<std::mutex> lock(mutex);
+        #endif
 
             xml.startElement("Message")
                     .writeAttribute("type", failureString(mb.m_severity))
@@ -5574,7 +5586,9 @@ namespace {
     struct JUnitReporter : public IReporter
     {
         XmlWriter  xml;
+    #ifndef DOCTEST_CONFIG_NO_MULTI_THREADING
         std::mutex mutex;
+    #endif
         Timer timer;
         std::vector<String> deepestSubcaseStackNames;
 
@@ -5742,7 +5756,9 @@ namespace {
         }
 
         void test_case_exception(const TestCaseException& e) override {
+        #ifndef DOCTEST_CONFIG_NO_MULTI_THREADING
             std::lock_guard<std::mutex> lock(mutex);
+        #endif
             testCaseData.addError("exception", e.error_string.c_str());
         }
 
@@ -5756,7 +5772,9 @@ namespace {
             if(!rb.m_failed) // report only failures & ignore the `success` option
                 return;
 
+        #ifndef DOCTEST_CONFIG_NO_MULTI_THREADING
             std::lock_guard<std::mutex> lock(mutex);
+        #endif
 
             std::ostringstream os;
             os << skipPathFromFilename(rb.m_file) << (opt.gnu_file_line ? ":" : "(")
@@ -5807,7 +5825,9 @@ namespace {
         bool                          hasLoggedCurrentTestStart;
         std::vector<SubcaseSignature> subcasesStack;
         size_t                        currentSubcaseLevel;
-        std::mutex                    mutex;
+    #ifndef DOCTEST_CONFIG_NO_MULTI_THREADING
+        std::mutex mutex;
+    #endif
 
         // caching pointers/references to objects of these types - safe to do
         const ContextOptions& opt;
@@ -6184,7 +6204,9 @@ namespace {
         }
 
         void test_case_exception(const TestCaseException& e) override {
+        #ifndef DOCTEST_CONFIG_NO_MULTI_THREADING
             std::lock_guard<std::mutex> lock(mutex);
+        #endif
             if(tc->m_no_output)
                 return;
 
@@ -6223,7 +6245,9 @@ namespace {
             if((!rb.m_failed && !opt.success) || tc->m_no_output)
                 return;
 
+        #ifndef DOCTEST_CONFIG_NO_MULTI_THREADING
             std::lock_guard<std::mutex> lock(mutex);
+        #endif
 
             logTestStart();
 
@@ -6239,7 +6263,9 @@ namespace {
             if(tc->m_no_output)
                 return;
 
+        #ifndef DOCTEST_CONFIG_NO_MULTI_THREADING
             std::lock_guard<std::mutex> lock(mutex);
+        #endif
 
             logTestStart();
 
